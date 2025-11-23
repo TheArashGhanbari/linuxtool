@@ -39,23 +39,41 @@ def show_menu():
 def run_sms_tool():
     print(f"\n{Fore.GREEN}Launching SMS Tool...{Style.RESET_ALL}")
     try:
+        # Check if sms.py exists and is readable
+        if not os.path.exists("sms.py"):
+            print(f"{Fore.RED}Error: sms.py file not found{Style.RESET_ALL}")
+            input(f"{Fore.YELLOW}Press Enter to continue...{Style.RESET_ALL}")
+            return
+
+        # Import and run SMS tool
         from sms import main as sms_main
         sms_main()
     except ImportError as e:
         print(f"{Fore.RED}Error loading SMS tool: {e}{Style.RESET_ALL}")
-    except KeyboardInterrupt:
-        print(f"\n{Fore.YELLOW}SMS Tool interrupted{Style.RESET_ALL}")
+        input(f"{Fore.YELLOW}Press Enter to continue...{Style.RESET_ALL}")
+    except Exception as e:
+        print(f"{Fore.RED}Unexpected error in SMS tool: {e}{Style.RESET_ALL}")
+        input(f"{Fore.YELLOW}Press Enter to continue...{Style.RESET_ALL}")
 
 
 def run_tor_tool():
     print(f"\n{Fore.GREEN}Launching Tor Tool...{Style.RESET_ALL}")
     try:
+        # Check if tor.py exists and is readable
+        if not os.path.exists("tor.py"):
+            print(f"{Fore.RED}Error: tor.py file not found{Style.RESET_ALL}")
+            input(f"{Fore.YELLOW}Press Enter to continue...{Style.RESET_ALL}")
+            return
+
+        # Import and run Tor tool
         from tor import main as tor_main
         tor_main()
     except ImportError as e:
         print(f"{Fore.RED}Error loading Tor tool: {e}{Style.RESET_ALL}")
-    except KeyboardInterrupt:
-        print(f"\n{Fore.YELLOW}Tor Tool interrupted{Style.RESET_ALL}")
+        input(f"{Fore.YELLOW}Press Enter to continue...{Style.RESET_ALL}")
+    except Exception as e:
+        print(f"{Fore.RED}Unexpected error in Tor tool: {e}{Style.RESET_ALL}")
+        input(f"{Fore.YELLOW}Press Enter to continue...{Style.RESET_ALL}")
 
 
 def main():
@@ -64,18 +82,26 @@ def main():
         print_banner()
         show_menu()
 
-        choice = input().strip()
+        try:
+            choice = input().strip()
 
-        if choice == '1':
-            run_sms_tool()
-        elif choice == '2':
-            run_tor_tool()
-        elif choice == '3':
-            print(
-                f"\n{Fore.GREEN}Thank you for using Linux Toolkit!{Style.RESET_ALL}")
-            sys.exit(0)
-        else:
-            print(f"\n{Fore.RED}Invalid choice! Please select 1-3{Style.RESET_ALL}")
+            if choice == '1':
+                run_sms_tool()
+            elif choice == '2':
+                run_tor_tool()
+            elif choice == '3':
+                print(
+                    f"\n{Fore.GREEN}Thank you for using Linux Toolkit!{Style.RESET_ALL}")
+                sys.exit(0)
+            else:
+                print(
+                    f"\n{Fore.RED}Invalid choice! Please select 1-3{Style.RESET_ALL}")
+                input(f"{Fore.YELLOW}Press Enter to continue...{Style.RESET_ALL}")
+        except KeyboardInterrupt:
+            print(f"\n{Fore.YELLOW}Returning to main menu...{Style.RESET_ALL}")
+            time.sleep(1)
+        except Exception as e:
+            print(f"\n{Fore.RED}Unexpected error: {e}{Style.RESET_ALL}")
             input(f"{Fore.YELLOW}Press Enter to continue...{Style.RESET_ALL}")
 
 
