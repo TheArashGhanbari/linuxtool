@@ -1,6 +1,5 @@
-colorama>=0.4.4
-requests>=2.25.1
-stem>=1.8.0
-PySocks>=1.7.1
-pycryptodome>=3.9.9
-rich>=13.0.0
+requests
+socks
+pysocks
+stem
+colorama
