@@ -1,288 +1,276 @@
 #!/usr/bin/env python3
 import os
 import sys
-import requests
-import socks
-import socket
-from colorama import Fore, Style, init
+import subprocess
+import time
+from typing import List, Tuple
 
-# Initialize colorama
-init(autoreset=True)
-
-# Global variable to track Tor status
-TOR_ENABLED = False
-
-
-def clear_screen():
-    os.system('clear' if os.name == 'posix' else 'cls')
+# Try to import curses for Windows
+try:
+    import curses
+except ImportError:
+    print("❌ curses not available. Installing windows-curses...")
+    subprocess.check_call([sys.executable, '-m', 'pip',
+                          'install', 'windows-curses'])
+    import curses
 
 
-def print_banner():
-    banner = f"""
-{Fore.CYAN}
-╔══════════════════════════════════════════╗
-║           {Fore.YELLOW}LINUX TOOLKIT{Fore.CYAN}                   ║
-║              {Fore.WHITE}Multi-Tool Platform{Fore.CYAN}           ║
-║         {Fore.GREEN}🔒 Tor-Enabled Tools{Fore.CYAN}              ║
-╚══════════════════════════════════════════╝
-{Style.RESET_ALL}
-"""
-    print(banner)
+class HackerToolkit:
+    def __init__(self):
+        self.tor_enabled = False
+        self.stdscr = None
+        self.current_selection = 0
+        self.menu_items = [
+            "SMS Bomber",
+            "Tor Manager",
+            "Exit"
+        ]
 
-
-def check_tor_connection():
-    """Check if Tor connection is available"""
-    try:
-        # Set up Tor proxy
-        socks.set_default_proxy(socks.SOCKS5, "127.0.0.1", 9050)
-        socket.socket = socks.socksocket
-
-        # Test connection
-        response = requests.get("http://checkip.amazonaws.com", timeout=10)
-        tor_ip = response.text.strip()
-
-        # Reset to direct connection for comparison
-        socks.set_default_proxy()
-        socket.socket = socket.socket
-        response = requests.get("http://checkip.amazonaws.com", timeout=10)
-        real_ip = response.text.strip()
-
-        return tor_ip != real_ip, tor_ip, real_ip
-    except:
-        return False, None, None
-
-
-def enable_tor_globally():
-    """Enable Tor for all network requests"""
-    global TOR_ENABLED
-    try:
-        print(f"{Fore.CYAN}🔒 Enabling Tor for all tools...{Style.RESET_ALL}")
-
-        # Set up Tor proxy globally
-        socks.set_default_proxy(socks.SOCKS5, "127.0.0.1", 9050)
-        socket.socket = socks.socksocket
-
-        # Test if Tor is working
-        is_working, tor_ip, real_ip = check_tor_connection()
-
-        if is_working:
-            TOR_ENABLED = True
-            print(f"{Fore.GREEN}✅ Tor enabled successfully!{Style.RESET_ALL}")
-            print(f"📡 Real IP: {real_ip}")
-            print(f"🕵️ Tor IP: {tor_ip}")
-            print(
-                f"{Fore.GREEN}🛡️ All tools will now use Tor network{Style.RESET_ALL}")
+    def init_curses(self):
+        """Initialize curses with hacker theme"""
+        try:
+            curses.start_color()
+            curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_BLACK)
+            curses.init_pair(2, curses.COLOR_BLACK, curses.COLOR_GREEN)
+            curses.init_pair(3, curses.COLOR_RED, curses.COLOR_BLACK)
+            curses.curs_set(0)
             return True
-        else:
-            print(f"{Fore.RED}❌ Tor is not available{Style.RESET_ALL}")
-            disable_tor_globally()
+        except:
             return False
 
-    except Exception as e:
-        print(f"{Fore.RED}❌ Error enabling Tor: {e}{Style.RESET_ALL}")
-        disable_tor_globally()
-        return False
+    def draw_banner(self):
+        """Draw hacker-style banner"""
+        banner = [
+            "╔════════════════════════════════════════════╗",
+            "║           PYTHON HACKER TOOLKIT           ║",
+            "║              [ ANONYMOUS MODE ]           ║",
+            "╚════════════════════════════════════════════╝"
+        ]
 
-
-def disable_tor_globally():
-    """Disable Tor and return to normal connection"""
-    global TOR_ENABLED
-    try:
-        socks.set_default_proxy()
-        socket.socket = socket.socket
-        TOR_ENABLED = False
-        print(f"{Fore.YELLOW}🔓 Tor disabled - Using normal connection{Style.RESET_ALL}")
-    except:
-        pass
-
-
-def tor_status_menu():
-    """Show Tor status and management menu"""
-    while True:
-        clear_screen()
-        print_banner()
-
-        print(f"{Fore.CYAN}🔒 TOR NETWORK MANAGER{Style.RESET_ALL}\n")
-
-        # Check current status
-        is_working, tor_ip, real_ip = check_tor_connection()
-
-        if is_working:
-            print(f"{Fore.GREEN}✅ Tor is ACTIVE{Style.RESET_ALL}")
-            print(f"📡 Real IP: {real_ip}")
-            print(f"🕵️ Tor IP: {tor_ip}")
-            print(f"{Fore.GREEN}🛡️ All tools are using Tor network{Style.RESET_ALL}")
-        else:
-            print(f"{Fore.RED}❌ Tor is INACTIVE{Style.RESET_ALL}")
-            print(
-                f"{Fore.YELLOW}⚠️ Tools will use normal connection (not anonymous){Style.RESET_ALL}")
-
-        menu = f"""
-{Fore.YELLOW}1.{Style.RESET_ALL} {'🔓 Disable' if is_working else '🔒 Enable'} Tor Globally
-{Fore.YELLOW}2.{Style.RESET_ALL} 📊 Check Connection Details
-{Fore.YELLOW}3.{Style.RESET_ALL} ↩️ Return to Main Menu
-
-{Fore.CYAN}Select an option (1-3): {Style.RESET_ALL}"""
-        print(menu)
-
-        choice = input().strip()
-
-        if choice == '1':
-            if is_working:
-                disable_tor_globally()
-                print(f"{Fore.YELLOW}Tor disabled for all tools{Style.RESET_ALL}")
-            else:
-                if enable_tor_globally():
-                    print(f"{Fore.GREEN}Tor enabled for all tools{Style.RESET_ALL}")
-                else:
-                    print(f"{Fore.RED}Failed to enable Tor{Style.RESET_ALL}")
-            input(f"\n{Fore.YELLOW}Press Enter to continue...{Style.RESET_ALL}")
-
-        elif choice == '2':
-            clear_screen()
-            print(f"{Fore.CYAN}🔍 Tor Connection Details{Style.RESET_ALL}\n")
-            is_working, tor_ip, real_ip = check_tor_connection()
-
-            if is_working:
-                print(f"{Fore.GREEN}✅ Connection Status: ACTIVE{Style.RESET_ALL}")
-                print(f"📍 Real IP: {Fore.RED}{real_ip}{Style.RESET_ALL}")
-                print(f"🎭 Tor IP: {Fore.GREEN}{tor_ip}{Style.RESET_ALL}")
-                print(f"🔧 Proxy: socks5://127.0.0.1:9050")
-                print(f"🛡️ Anonymity: {Fore.GREEN}ENABLED{Style.RESET_ALL}")
-            else:
-                print(f"{Fore.RED}❌ Connection Status: INACTIVE{Style.RESET_ALL}")
-                print(f"📍 Your IP: {real_ip}")
-                print(f"🔧 Proxy: Direct connection")
-                print(f"🛡️ Anonymity: {Fore.RED}DISABLED{Style.RESET_ALL}")
-
-            input(f"\n{Fore.YELLOW}Press Enter to continue...{Style.RESET_ALL}")
-
-        elif choice == '3':
-            break
-
-        else:
-            print(f"{Fore.RED}Invalid choice!{Style.RESET_ALL}")
-            input(f"{Fore.YELLOW}Press Enter to continue...{Style.RESET_ALL}")
-
-
-def show_menu():
-    """Show main menu with Tor status"""
-    global TOR_ENABLED
-
-    # Check Tor status
-    is_working, tor_ip, real_ip = check_tor_connection()
-    TOR_ENABLED = is_working
-
-    tor_status_indicator = f"{Fore.GREEN}🔒 TOR ENABLED{Style.RESET_ALL}" if TOR_ENABLED else f"{Fore.RED}🔓 TOR DISABLED{Style.RESET_ALL}"
-
-    menu = f"""
-{Fore.GREEN}Available Tools:{Style.RESET_ALL}
-
-{tor_status_indicator}
-
-{Fore.YELLOW}1.{Style.RESET_ALL} SMS Tool {'🛡️' if TOR_ENABLED else '⚠️'}
-{Fore.YELLOW}2.{Style.RESET_ALL} Tor Connection Manager
-{Fore.YELLOW}3.{Style.RESET_ALL} Tor Network Settings
-{Fore.YELLOW}4.{Style.RESET_ALL} Exit
-
-{Fore.CYAN}Select an option (1-4): {Style.RESET_ALL}"""
-
-    print(menu)
-
-
-def run_sms_tool():
-    """Run SMS tool with Tor awareness"""
-    global TOR_ENABLED
-
-    print(f"\n{Fore.GREEN}Launching SMS Tool...{Style.RESET_ALL}")
-
-    # Show Tor status
-    if TOR_ENABLED:
-        print(f"{Fore.GREEN}🛡️ SMS will be sent through Tor network{Style.RESET_ALL}")
-        is_working, tor_ip, real_ip = check_tor_connection()
-        if is_working:
-            print(f"🎭 Your Tor IP: {tor_ip}")
-    else:
-        print(f"{Fore.RED}⚠️ Warning: Tor is not enabled!{Style.RESET_ALL}")
-        print(f"{Fore.YELLOW}SMS will be sent with your real IP{Style.RESET_ALL}")
-
-        response = input(
-            f"{Fore.CYAN}Enable Tor first? (y/n): {Style.RESET_ALL}").strip().lower()
-        if response == 'y':
-            if enable_tor_globally():
-                print(f"{Fore.GREEN}✅ Tor enabled for SMS tool{Style.RESET_ALL}")
-            else:
-                print(f"{Fore.RED}❌ Continuing without Tor{Style.RESET_ALL}")
-
-    try:
-        # Import and run SMS tool
-        # First try the original sms.py
-        try:
-            from sms import main as sms_main
-            sms_main()
-        except ImportError:
-            # Fallback to sms_fallback if exists
+        for i, line in enumerate(banner):
             try:
-                from sms_fallback import main as sms_main
-                sms_main()
-            except ImportError:
-                print(f"{Fore.RED}❌ No SMS tool found!{Style.RESET_ALL}")
-                input(f"{Fore.YELLOW}Press Enter to continue...{Style.RESET_ALL}")
+                self.stdscr.addstr(i + 2, 2, line, curses.color_pair(1))
+            except:
+                pass
 
-    except Exception as e:
-        print(f"{Fore.RED}Error in SMS tool: {e}{Style.RESET_ALL}")
-        input(f"{Fore.YELLOW}Press Enter to continue...{Style.RESET_ALL}")
-
-
-def run_tor_tool():
-    """Run the dedicated Tor connection tool"""
-    print(f"\n{Fore.GREEN}Launching Tor Connection Manager...{Style.RESET_ALL}")
-    try:
-        from tor import main as tor_main
-        tor_main()
-    except ImportError as e:
-        print(f"{Fore.RED}Error loading Tor tool: {e}{Style.RESET_ALL}")
-        input(f"{Fore.YELLOW}Press Enter to continue...{Style.RESET_ALL}")
-    except Exception as e:
-        print(f"{Fore.RED}Unexpected error: {e}{Style.RESET_ALL}")
-        input(f"{Fore.YELLOW}Press Enter to continue...{Style.RESET_ALL}")
-
-
-def main():
-    # Initial Tor status check
-    global TOR_ENABLED
-    is_working, tor_ip, real_ip = check_tor_connection()
-    TOR_ENABLED = is_working
-
-    while True:
-        clear_screen()
-        print_banner()
-        show_menu()
-
-        choice = input().strip()
-
-        if choice == '1':
-            run_sms_tool()
-        elif choice == '2':
-            run_tor_tool()
-        elif choice == '3':
-            tor_status_menu()
-        elif choice == '4':
-            # Disable Tor before exit
-            disable_tor_globally()
-            print(
-                f"\n{Fore.GREEN}Thank you for using Linux Toolkit!{Style.RESET_ALL}")
-            sys.exit(0)
+    def draw_status(self):
+        """Display current Tor status"""
+        status_line = "Tor Status: "
+        if self.tor_enabled:
+            status_line += "[ACTIVE - ANONYMOUS]"
+            color = curses.color_pair(1)
         else:
-            print(f"\n{Fore.RED}Invalid choice! Please select 1-4{Style.RESET_ALL}")
-            input(f"{Fore.YELLOW}Press Enter to continue...{Style.RESET_ALL}")
+            status_line += "[INACTIVE - VISIBLE]"
+            color = curses.color_pair(3)
+
+        try:
+            self.stdscr.addstr(8, 2, status_line, color)
+        except:
+            pass
+
+    def draw_menu(self):
+        """Draw the main menu"""
+        try:
+            self.stdscr.addstr(10, 2, "SELECT TOOL:", curses.color_pair(1))
+
+            for i, item in enumerate(self.menu_items):
+                if i == self.current_selection:
+                    self.stdscr.addstr(
+                        12 + i, 4, f"> {item}", curses.color_pair(2))
+                else:
+                    self.stdscr.addstr(
+                        12 + i, 4, f"  {item}", curses.color_pair(1))
+        except:
+            pass
+
+    def run_sms_bomber(self):
+        """Run SMS Bomber with current Tor setting"""
+        self.stdscr.clear()
+        self.stdscr.addstr(2, 2, "🚀 LAUNCHING SMS BOMBER...",
+                           curses.color_pair(1))
+        self.stdscr.refresh()
+
+        # Set environment for Tor if enabled
+        env = os.environ.copy()
+        if self.tor_enabled:
+            env['ALL_PROXY'] = 'socks5://127.0.0.1:9050'
+            self.stdscr.addstr(
+                4, 2, "🔒 USING TOR NETWORK - ANONYMOUS MODE", curses.color_pair(1))
+        else:
+            self.stdscr.addstr(
+                4, 2, "⚠️  DIRECT CONNECTION - NO ANONYMITY", curses.color_pair(3))
+
+        self.stdscr.addstr(6, 2, "Press any key to continue...")
+        self.stdscr.refresh()
+        self.stdscr.getch()
+
+        try:
+            # Run SMS Bomber
+            import sms
+        except Exception as e:
+            self.stdscr.addstr(8, 2, f"❌ Error: {e}", curses.color_pair(3))
+            self.stdscr.addstr(10, 2, "Press any key to return...")
+            self.stdscr.refresh()
+            self.stdscr.getch()
+
+    def tor_manager(self):
+        """Tor management interface"""
+        while True:
+            self.stdscr.clear()
+            self.draw_banner()
+
+            self.stdscr.addstr(8, 2, "🔧 TOR MANAGER", curses.color_pair(1))
+            self.stdscr.addstr(10, 2, "1. Connect to Tor")
+            self.stdscr.addstr(11, 2, "2. Disconnect from Tor")
+            self.stdscr.addstr(12, 2, "3. Check Tor Status")
+            self.stdscr.addstr(13, 2, "4. Back to Main Menu")
+
+            self.stdscr.addstr(
+                15, 2, f"Current Status: {'ACTIVE' if self.tor_enabled else 'INACTIVE'}")
+
+            self.stdscr.refresh()
+
+            key = self.stdscr.getch()
+
+            if key == ord('1'):
+                self.connect_tor()
+            elif key == ord('2'):
+                self.disconnect_tor()
+            elif key == ord('3'):
+                self.check_tor_status()
+            elif key == ord('4'):
+                break
+
+    def connect_tor(self):
+        """Connect to Tor network"""
+        self.stdscr.clear()
+        self.draw_banner()
+
+        self.stdscr.addstr(
+            8, 2, "🔄 CONNECTING TO TOR NETWORK...", curses.color_pair(1))
+        self.stdscr.refresh()
+
+        try:
+            import requests
+            session = requests.Session()
+            session.proxies = {
+                'http': 'socks5://127.0.0.1:9050',
+                'https': 'socks5://127.0.0.1:9050'
+            }
+
+            response = session.get('http://httpbin.org/ip', timeout=10)
+            if response.status_code == 200:
+                self.tor_enabled = True
+                ip_info = response.json()
+                self.stdscr.addstr(
+                    10, 2, f"✅ TOR CONNECTED SUCCESSFULLY!", curses.color_pair(1))
+                self.stdscr.addstr(
+                    11, 2, f"🌐 Your Tor IP: {ip_info.get('origin', 'Unknown')}")
+            else:
+                self.stdscr.addstr(
+                    10, 2, "❌ Failed to connect to Tor", curses.color_pair(3))
+
+        except Exception as e:
+            self.stdscr.addstr(
+                10, 2, f"❌ Tor connection failed: {e}", curses.color_pair(3))
+            self.stdscr.addstr(
+                12, 2, "Make sure Tor is installed and running on port 9050")
+
+        self.stdscr.addstr(14, 2, "Press any key to continue...")
+        self.stdscr.refresh()
+        self.stdscr.getch()
+
+    def disconnect_tor(self):
+        """Disconnect from Tor"""
+        self.tor_enabled = False
+        self.stdscr.clear()
+        self.draw_banner()
+        self.stdscr.addstr(8, 2, "✅ DISCONNECTED FROM TOR",
+                           curses.color_pair(1))
+        self.stdscr.addstr(10, 2, "Press any key to continue...")
+        self.stdscr.refresh()
+        self.stdscr.getch()
+
+    def check_tor_status(self):
+        """Check current Tor status and IP"""
+        self.stdscr.clear()
+        self.draw_banner()
+
+        self.stdscr.addstr(
+            8, 2, "🔍 CHECKING NETWORK STATUS...", curses.color_pair(1))
+        self.stdscr.refresh()
+
+        try:
+            import requests
+
+            if self.tor_enabled:
+                session = requests.Session()
+                session.proxies = {
+                    'http': 'socks5://127.0.0.1:9050',
+                    'https': 'socks5://127.0.0.1:9050'
+                }
+                response = session.get('http://httpbin.org/ip', timeout=10)
+                ip_info = response.json()
+
+                self.stdscr.addstr(10, 2, "✅ TOR ACTIVE", curses.color_pair(1))
+                self.stdscr.addstr(
+                    11, 2, f"🌐 Tor IP: {ip_info.get('origin', 'Unknown')}")
+            else:
+                response = requests.get('http://httpbin.org/ip', timeout=10)
+                ip_info = response.json()
+
+                self.stdscr.addstr(
+                    10, 2, "⚠️  DIRECT CONNECTION", curses.color_pair(3))
+                self.stdscr.addstr(
+                    11, 2, f"🌐 Your Real IP: {ip_info.get('origin', 'Unknown')}")
+
+        except Exception as e:
+            self.stdscr.addstr(
+                10, 2, f"❌ Error checking status: {e}", curses.color_pair(3))
+
+        self.stdscr.addstr(14, 2, "Press any key to continue...")
+        self.stdscr.refresh()
+        self.stdscr.getch()
+
+    def main_loop(self, stdscr):
+        """Main application loop"""
+        self.stdscr = stdscr
+        if not self.init_curses():
+            self.stdscr.addstr(0, 0, "⚠️  Color support not available")
+
+        while True:
+            self.stdscr.clear()
+            self.draw_banner()
+            self.draw_status()
+            self.draw_menu()
+
+            key = self.stdscr.getch()
+
+            if key == curses.KEY_UP:
+                self.current_selection = (
+                    self.current_selection - 1) % len(self.menu_items)
+            elif key == curses.KEY_DOWN:
+                self.current_selection = (
+                    self.current_selection + 1) % len(self.menu_items)
+            elif key == ord('\n') or key == ord(' '):
+                if self.current_selection == 0:
+                    self.run_sms_bomber()
+                elif self.current_selection == 1:
+                    self.tor_manager()
+                elif self.current_selection == 2:
+                    break
+
+    def run(self):
+        """Start the application"""
+        try:
+            curses.wrapper(self.main_loop)
+            print("\n👋 Goodbye! Stay anonymous!")
+        except KeyboardInterrupt:
+            print("\n👋 Goodbye! Stay anonymous!")
+        except Exception as e:
+            print(f"❌ Error: {e}")
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except KeyboardInterrupt:
-        # Disable Tor on exit
-        disable_tor_globally()
-        print(f"\n{Fore.YELLOW}Program interrupted by user{Style.RESET_ALL}")
-        sys.exit(0)
+    toolkit = HackerToolkit()
+    toolkit.run()

@@ -1,5 +1,5 @@
 requests
-socks
 pysocks
-stem
-colorama
+curses-menu
+cryptography
+pycryptodome
